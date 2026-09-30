@@ -1,0 +1,15 @@
+import { AutoModelForImageTextToText, AutoProcessor, env } from "@huggingface/transformers";
+import { LETTERS, messages, renderQuestion } from "./src/onejev";
+env.allowLocalModels = true; env.allowRemoteModels = false; env.localModelPath = new URL("../models/", import.meta.url).pathname;
+const [repo, dt] = process.argv.slice(2);
+const p: any = await AutoProcessor.from_pretrained(repo);
+const dtype = dt === "fp32" ? { embed_tokens: "fp32", vision_encoder: "fp32", decoder_model_merged: "fp32" } : { embed_tokens: "q4f16", vision_encoder: "fp16", decoder_model_merged: "q4f16" };
+const m: any = await AutoModelForImageTextToText.from_pretrained(repo, { dtype, device: "cpu" } as never);
+const q = { type: "choice", instructions: "Which team should handle this?", criteria: { billing: "charges", technical: "bugs", sales: "pricing" } } as const;
+const { suffix } = renderQuestion(q as any);
+const text = p.apply_chat_template(messages({ body: "We were billed twice for March, refund please." }, suffix, 0), { add_generation_prompt: true, tokenize: false, enable_thinking: false });
+const out = await m(await p(text));
+const [, L, V] = out.logits.dims; const d = out.logits.data as Float32Array;
+const slot = "ABC".split("").map((l) => p.tokenizer.encode(l, { add_special_tokens: false })[0]);
+let mx = -1e9; for (let i = (L - 1) * V; i < L * V; i++) mx = Math.max(mx, d[i]);
+console.log(repo, dt, "slot logits", slot.map((s) => d[(L - 1) * V + s].toFixed(2)).join(" "), "max vocab logit", mx.toFixed(2), "logits dtype", out.logits.type);

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OneJev in the Browser</title>
+    <meta name="description" content="Ask typed questions about a screenshot or photo and get calibrated answers from OneJev-0.8B, running on your GPU with WebGPU. Nothing is uploaded." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%224%22 fill=%22%236d5dfc%22/%3E%3Ccircle cx=%228%22 cy=%228%22 r=%223.2%22 fill=%22white%22/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>OneJev <span>in the browser</span></h1>
+        <p>
+          Show it a screenshot or a photo, ask typed questions, get a probability for every option.
+          <a href="https://github.com/OmniJev/OneJev" target="_blank" rel="noreferrer">OneJev-0.8B</a> runs on your GPU with WebGPU; your image never leaves this page.
+        </p>
+      </div>
+      <div class="badges">
+        <span id="device" class="badge">checking GPU…</span>
+        <label class="badge select">
+          <select id="precision">
+            <option value="q4f16">4-bit · 0.8 GB</option>
+            <option value="fp16">16-bit · 2.2 GB, closer to the original</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" id="image-card">
+        <div class="card-head"><h2><span class="step">1</span> Image</h2><span id="image-info" class="muted"></span></div>
+        <label id="drop" class="drop">
+          <input id="file" type="file" accept="image/*" hidden />
+          <img id="preview" alt="" hidden />
+          <span id="drop-text"><strong>Drop, paste or choose an image</strong><span class="muted">A screenshot, a photo, a receipt. Large images are scaled to 896 px.</span></span>
+        </label>
+        <div class="samples">
+          <span class="muted">Or try:</span>
+          <button data-sample="review">Angry review</button>
+          <button data-sample="payment">Payment screen</button>
+          <button data-sample="text">No image, just text</button>
+        </div>
+        <label class="field">Context <span class="muted">(optional, sent with the image as part of the state)</span>
+          <input id="context" type="text" placeholder="e.g. product review from the app store" />
+        </label>
+      </section>
+
+      <section class="card" id="questions-card">
+        <div class="card-head"><h2><span class="step">2</span> Questions</h2><button id="add" class="secondary">Add a question</button></div>
+        <div id="questions"></div>
+        <div class="run-row">
+          <button id="run" class="primary">Ask</button>
+          <div id="progress" class="progress" hidden><div></div></div>
+          <span id="status" class="muted"></span>
+        </div>
+      </section>
+
+      <section class="card" id="answers-card" hidden>
+        <div class="card-head"><h2><span class="step">3</span> Answers</h2><span id="timing" class="muted"></span></div>
+        <div id="answers"></div>
+        <details>
+          <summary>The same request for the System One API</summary>
+          <pre id="request"></pre>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      Model: <a href="https://huggingface.co/OmniJev/OneJev-0.8B" target="_blank" rel="noreferrer">OmniJev/OneJev-0.8B</a> (Apache-2.0), a Qwen3.5-0.8B fine-tune,
+      converted to ONNX and checked against the original: fp16 within 0.03 of its probabilities, 4-bit within 0.025 on 8 of 9 test questions.
+      Each question is one forward pass; the answer is the softmax over the option letters, as in OneJev's own engine.
+      Runs with <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noreferrer">Transformers.js</a>.
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
